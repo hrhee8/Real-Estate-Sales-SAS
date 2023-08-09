@@ -9,3 +9,9 @@ Statistical Analysis Performed
 4. Tukey Analysis
 5. Bonferroni confidence interval for pairwise comparison
 6. 4-way ANOVA
+
+Models used
+1. glm
+
+Data Modification
+1. Box Cox transformation
