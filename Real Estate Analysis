@@ -1,0 +1,216 @@
+/* Bring the data and name the variables of the data */ data sales;
+infile '/home/u49619011/my_shared_file_links/achronop/c_8944/IE 400/sales.txt'; input ID price sqfeet bed bath aircon garage pool year quality style lot highway;
+/* Calculate the statistics of the data using proc means */ -(1) 
+proc means data=sales;
+    var price;
+    var sqfeet;
+    var bed;
+    var bath;
+    var aircon;
+    var garage;
+    var pool;
+    var year;
+    var quality;
+    var style;
+    var lot;
+    var highway;
+run;
+/* Calculate the statistics of the data using proc univariate */ -(2) proc univariate data=sales mode;
+    var price;
+    var sqfeet;
+    var bed;
+    var bath;
+    var aircon;
+    var garage;
+    var pool;
+    var year;
+    var quality;
+    var style;
+    var lot;
+    var highway;
+run;
+/* Plot histogram to check the distribution of response variable */ -(3)
+proc univariate data=sales; histogram price;
+ run;
+ /* TWO Way ANOVA */
+/* Modify the data so that newstyle variable could be categorized in binary options */  -(4)
+data sales;
+set sales;
+newstyle = .; run;
+data sales;
+       set sales;
+if style ^= 1 then newstyle = 2;
+       else if style = 1 then newstyle = 1;
+run;
+/* Plot two way ANOVA */ proc glm data=sales;
+-(15)
+class quality newstyle;
+model price = quality|newstyle;
+means quality*newstyle / hovtest=bartlett hovtest=levene; output out=temp r=resid p=predict;
+run;
+/* Dataset Containing Residuals */ data residsF;
+    set temp;
+run;
+/* Fitted vs Residual to check constant variance */ goptions hsize=5;
+goptions vsize=4;
+proc gplot data=residsF;
+plot resid*predict; run;
+/* QQ plot to check normality */ goptions hsize=5;
+goptions vsize=4;
+proc univariate data=residsF noprint;
+var resid;
+histogram resid/ normal;
+qqplot resid / normal (L=1 mu=est sigma=est);
+run;
+-(13)
+-(13)
+-(13)
+/* Sequence Plot to check Independence */ data resids2;
+set residsF;
+  order = _n_;
+run;
+goptions reset=all; goptions hsize=5; goptions vsize=4;
+proc gplot data=resids2;
+plot resid*order / vaxis=axis1 haxis=axis2 ; title2 "Sequence plot of the residuals"; axis1 label = (a=90 'Residual');
+axis2 label=('Order');
+symbol1 v=dot c=blue h=.8; run;
+
+/* Box Cox transformation */
+proc transreg data=sales maxiter=0 nozeroconstant;
+model BoxCox(price) = identity(quality|newstyle);
+output;
+run;
+/* Estimated Lambda value turned out to be -0.5*/ data newsales;
+set sales;
+newprice = 1/sqrt(price);
+run;
+-(14)
+/* TWO Way ANOVA again with changed value due to Box Cox transformation */ proc glm data=newsales;
+class quality newstyle;
+model newprice = quality|newstyle; means quality*newstyle;
+output out=temp r=resid p=predict;
+run;
+data residsF; set temp;
+run;
+goptions hsize=5; goptions vsize=4;
+proc gplot data=residsF; plot resid*predict; run;
+goptions hsize=5;
+goptions vsize=4;
+proc univariate data=residsF noprint;
+var resid;
+histogram resid/ normal;
+qqplot resid / normal (L=1 mu=est sigma=est);
+run;
+/* Sequence Plot to check Independence */ data resids2;
+set residsF;
+  order = _n_;
+run;
+goptions hsize=5; goptions vsize=4;
+proc gplot data=resids2;
+plot resid*order / vaxis=axis1 haxis=axis2 ; title2 "Sequence plot of the residuals"; axis1 label = (a=90 'Residual');
+axis2 label=('Order');
+symbol1 v=dot c=blue h=.8; run;
+proc glm data=newsales; -(5) class quality newstyle;
+
+model newprice = quality newstyle quality*newstyle;
+means quality newstyle quality*newstyle / TUKEY alpha=0.1 cldiff; run;
+/* FOUR Way ANOVA*/
+/* rearrange data so that numbers within certain categories could be categorized as 1, 2, 3 or 4. */ -(6)
+data sales;
+set sales;
+if bed<=2 then newbed = 1;
+else if bed=3 then newbed = 2;
+else if bed>=4 then newbed = 3;
+if sqfeet <1000 then newsqfeet = 1;
+else if 1000<=sqfeet<2000 then newsqfeet = 2; else if 2000<=sqfeet<3000 then newsqfeet = 3; else if 3000<=sqfeet then newsqfeet = 4;
+if year<1930 then newyear = 1;
+else if 1930<=year<1965 then newyear = 2; else if 1965<=year<1980 then newyear = 3; else if year>=1980 then newyear = 4;
+if bath<=1 then newbath = 1;
+else if 2<=bath<=3 then newbath = 2;
+else if 4<=bath then newbath = 3;
+run;
+/* Four way ANOVA */ -(7) proc glm data=sales;
+class newsqfeet newbed newbath newyear;
+model price = newsqfeet|newbed|newbath|newyear; means newsqfeet*newbed*newbath*newyear; /*output out=temp r=resid p=predict;*/
+run;
+/* eliminated 4 way interaction */
+proc glm data=sales;
+class newsqfeet newbed newbath
+model price = newsqfeet newbed
+newsqfeet*newbed newsqfeet*newbath newsqfeet*newyear newbed*newbath newbed*newyear newbath*newyear newsqfeet*newbed*newbath newsqfeet*newbed*newyear newsqfeet*newbath*newyear newbed*newbath*newyear;
+run;
+-(8)
+newyear;
+newbath newyear
+/* eliminated three way interaction except newsqfeet*newbath*newyear */
+proc glm data=sales; -(9)
+class newsqfeet newbed newbath newyear;
+    model price = newsqfeet newbed newbath newyear newsqfeet*newbed newsqfeet*newbath
+newsqfeet*newyear
+newbed*newbath newbed*newyear newbath*newyear newsqfeet*newbath*newyear; run;
+/* eliminated three way interaction */
+
+proc glm data=sales; -(10)
+class newsqfeet newbed newbath newyear;
+model price = newsqfeet newbed newbath newyear newsqfeet*newbed newsqfeet*newbath
+newsqfeet*newyear
+newbed*newbath newbed*newyear newbath*newyear; output out=temp r=resid p=predict;
+run;
+/* eliminated 3 two-way interactions */ proc glm data=sales;
+-(11)
+class newsqfeet newbed newbath newyear;
+model price = newsqfeet newbed newbath newyear newsqfeet*newbed newsqfeet*newyear newbed*newbath;
+output out=temp r=resid p=predict;
+run;
+/* Again check normality, variance, and independence for ANOVA assumptions*/ data residsF;
+    set temp;
+run;
+goptions hsize=5; goptions vsize=4;
+proc gplot data=residsF; plot resid*predict; run;
+goptions hsize=5;
+goptions vsize=4;
+proc univariate data=residsF noprint;
+var resid;
+histogram resid/ normal;
+qqplot resid / normal (L=1 mu=est sigma=est);
+run;
+goptions hsize=5; goptions vsize=4;
+proc gplot data=resids2;
+plot resid*order / vaxis=axis1 haxis=axis2 ; title2 "Sequence plot of the residuals"; axis1 label = (a=90 'Residual');
+axis2 label=('Order');
+symbol1 v=dot c=blue h=.8; run;
+/* Box Cox transformation to find the optimal lambda */ proc transreg data=sales maxiter=0 nozeroconstant;
+-(16)
+    model BoxCox(price) = identity(newsqfeet newbed newbath newyear newsqfeet*newbed
+newsqfeet*newyear
+    newbed*newbath);
+output;
+run;
+/* lambda turned out to be -0.5 again, so modify the data again with -0.5 lambda*/ data newsales2;
+set sales;
+newprice = price**(-1/2);
+run;
+
+/* Run ANOVA with the optimal model found by Box Cox transformation */ proc glm data=newsales2;
+class newsqfeet newbed newbath newyear;
+model newprice = newsqfeet newbed newbath newyear newsqfeet*newbed newbed*newbath newsqfeet*newyear;
+output out=temp r=resid p=predict; run;
+data residsF; set temp;
+run;
+/* Find fitted vs residual, histogram, qqplot, and sequence plot to check ANOVA assumptions*/
+goptions hsize=5; goptions vsize=4;
+proc gplot data=residsF; plot resid*predict; run;
+goptions hsize=5;
+goptions vsize=4;
+proc univariate data=residsF noprint;
+var resid;
+histogram resid/ normal;
+qqplot resid / normal (L=1 mu=est sigma=est);
+run;
+data resids2; set residsF; order = _n_;
+run;
+goptions hsize=5; goptions vsize=4;
+proc gplot data=resids2;
+plot resid*order / vaxis=axis1 haxis=axis2 ; title2 "Sequence plot of the residuals"; axis1 label = (a=90 'Residual');
+axis2 label=('Order');
+symbol1 v=dot c=blue h=.8; run;
