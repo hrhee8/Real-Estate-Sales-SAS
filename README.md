@@ -11,7 +11,11 @@ Statistical Analysis Performed
 6. 4-way ANOVA
 
 Models used
-1. glm
+1. Glm
 
 Data Modification
 1. Box Cox transformation
+
+
+Example of data analysis in the report:
+![alt text][https://github.com/hrhee8/Real-Estate-Sales-SAS/blob/main/Screenshot%202023-08-09%20at%209.38.44%20PM.png]
