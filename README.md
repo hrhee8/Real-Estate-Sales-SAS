@@ -18,4 +18,5 @@ Data Modification
 
 
 Example of data analysis in the report:
-![alt text][https://github.com/hrhee8/Real-Estate-Sales-SAS/blob/main/Screenshot%202023-08-09%20at%209.38.44%20PM.png]
+![alt text](https://github.com/hrhee8/Real-Estate-Sales-SAS/blob/main/Screenshot%202023-08-09%20at%209.38.44%20PM.png)
+![alt text](https://github.com/hrhee8/Real-Estate-Sales-SAS/blob/main/Screenshot%202023-08-09%20at%209.38.48%20PM.png)
